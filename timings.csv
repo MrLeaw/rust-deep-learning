@@ -1,0 +1,8 @@
+Model,Time (ms)
+SGD,7.645917
+Linear,0.686209
+GaussianNB Breast Cancer,0.760792
+GaussianNB Iris,0.103791
+Logistic Regression Breast Cancer,27.268916
+Decision Tree Breast Cancer,34.852666
+Decision Tree Iris,0.679417
