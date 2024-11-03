@@ -10,4 +10,4 @@ pub mod stochastic_gradient_descent;
 pub mod decision_tree;
 pub mod gaussian_naive_bayes;
 pub mod logistic_regression;
-
+pub mod support_vector_machine;

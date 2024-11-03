@@ -26,15 +26,23 @@ struct DecisionTreeNode {
     prediction: Option<f64>, // Holds the prediction for leaf nodes
 }
 
+impl Default for DecisionTreeNode {
+    fn default() -> Self {
+        Self {
+            left: None,
+            right: None,
+            best_feature: 0,
+            best_threshold: 0.0,
+            prediction: None,
+        }
+    }
+}
+
 impl DecisionTree {
     pub fn new(selected_method: DecisionTreeClassificationMethod) -> Self {
         Self {
             root: DecisionTreeNode {
-                left: None,
-                right: None,
-                best_feature: 0,
-                best_threshold: 0.0,
-                prediction: None,
+                ..Default::default()
             },
             selected_method,
         }
@@ -68,22 +76,15 @@ impl DecisionTree {
     fn build_tree(&self, x: &[Vec<f64>], y: &[f64], single_threaded: bool) -> DecisionTreeNode {
         if y.is_empty() {
             return DecisionTreeNode {
-                left: None,
-                right: None,
-                best_feature: 0,
-                best_threshold: 0.0,
-                prediction: None,
+                ..Default::default()
             };
         }
 
         // Base case: if all labels are the same, return a leaf node with that label
         if y.iter().all(|&label| label == y[0]) {
             return DecisionTreeNode {
-                left: None,
-                right: None,
-                best_feature: 0,
-                best_threshold: 0.0,
                 prediction: Some(y[0]),
+                ..Default::default()
             };
         }
         // If X is empty, return the most common label in y as a leaf prediction
@@ -93,11 +94,8 @@ impl DecisionTree {
                 .max_by_key(|&&label| y.iter().filter(|&&val| val == label).count())
                 .unwrap();
             return DecisionTreeNode {
-                left: None,
-                right: None,
-                best_feature: 0,
-                best_threshold: 0.0,
                 prediction: Some(most_common_label),
+                ..Default::default()
             };
         }
 

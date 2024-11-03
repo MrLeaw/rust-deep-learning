@@ -163,8 +163,8 @@ fn run_gaussian_nb_iris() {
 fn run_logistic_regression() {
     let (x, y) = load_breast_cancer_dataset();
     let (x_train, x_test, y_train, y_test) = train_test_split(&x, &y, 0.2, true);
-    let mut logistic_regression = LogisticRegression::new();
-    logistic_regression.fit(&x_train, &y_train, 0.01, 1000);
+    let mut logistic_regression = LogisticRegression::new(0.01, 1000);
+    logistic_regression.fit(&x_train, &y_train);
     let y_pred = logistic_regression.predict(&x_test);
     let matrix = ConfusionMatrix::new(&y_test, &y_pred, &vec![0.0, 1.0]);
     matrix.print_matrix();
@@ -176,8 +176,8 @@ fn run_logistic_regression() {
 fn run_logistic_regression_iris() {
     let (x, y) = load_iris_dataset();
     let (x_train, x_test, y_train, y_test) = train_test_split(&x, &y, 0.2, true);
-    let mut logistic_regression = LogisticRegression::new();
-    logistic_regression.fit(&x_train, &y_train, 0.01, 1000);
+    let mut logistic_regression = LogisticRegression::new(0.01, 1000);
+    logistic_regression.fit(&x_train, &y_train);
     let y_pred = logistic_regression.predict(&x_test);
     let matrix = ConfusionMatrix::new(&y_test, &y_pred, &vec![0.0, 1.0, 2.0]);
     matrix.print_matrix();

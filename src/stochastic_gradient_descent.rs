@@ -1,4 +1,5 @@
 use crate::utils::dot_product;
+use rand::seq::SliceRandom;
 
 pub struct StochasticGradientDescent {
     learning_rate: f64,
@@ -18,16 +19,24 @@ impl StochasticGradientDescent {
 
     pub fn fit(&mut self, x: &[Vec<f64>], y: &[f64]) {
         self.weights = vec![0.0; x[0].len()];
+        let mut indices: Vec<usize> = (0..x.len()).collect();
         for _ in 0..self.iterations {
-            for (x_i, y_i) in x.iter().zip(y.iter()) {
+            indices.shuffle(&mut rand::thread_rng());
+
+            for &i in &indices {
+                let x_i = &x[i];
+                let y_i = y[i];
+
                 let y_hat = dot_product(&self.weights, x_i) + self.bias;
                 let error = y_i - y_hat;
+
                 self.weights = self
                     .weights
                     .iter()
                     .zip(x_i.iter())
                     .map(|(w, x)| w + self.learning_rate * error * x)
                     .collect();
+
                 self.bias += self.learning_rate * error;
             }
         }

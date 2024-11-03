@@ -5,6 +5,16 @@ pub struct LinearRegression {
     coefficients: Vec<f64>,
 }
 
+fn x_with_bias(x: &[Vec<f64>]) -> Vec<Vec<f64>> {
+    x.iter()
+        .map(|row| {
+            let mut new_row = vec![1.0];
+            new_row.extend(row);
+            new_row
+        })
+        .collect()
+}
+
 impl LinearRegression {
     pub fn new() -> Self {
         Self {
@@ -14,15 +24,7 @@ impl LinearRegression {
     }
 
     pub fn fit(&mut self, x: &[Vec<f64>], y: &[f64]) {
-        let x_with_bias: Vec<Vec<f64>> = x
-            .iter()
-            .map(|row| {
-                let mut new_row = vec![1.0];
-                new_row.extend(row);
-                new_row
-            })
-            .collect();
-
+        let x_with_bias = x_with_bias(x);
         let x_transpose = transpose(&x_with_bias);
         let xtx = matrix_multiply(&x_transpose, &x_with_bias);
         let xtx_inv = invert_matrix(&xtx);

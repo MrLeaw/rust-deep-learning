@@ -1,2 +1,14 @@
 /target
 /lib
+/charts
+timings.csv
+y_pred.csv
+y_test.csv
+ylr_pred.csv
+ylr_test.csv
+matrix_decision_tree_iris.csv
+matrix_decision_tree.csv
+matrix_logistic_regression_iris.csv
+matrix_logistic_regression.csv
+matrix.csv
+.DS_Store
