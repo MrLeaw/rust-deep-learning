@@ -11,4 +11,5 @@ matrix_decision_tree.csv
 matrix_logistic_regression_iris.csv
 matrix_logistic_regression.csv
 matrix.csv
+matrix_iris.csv
 .DS_Store
