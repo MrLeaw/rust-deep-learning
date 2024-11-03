@@ -2,6 +2,7 @@
 /lib
 /charts
 /bin
+/share
 
 timings.csv
 timings_python.csv
