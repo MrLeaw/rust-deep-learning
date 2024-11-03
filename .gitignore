@@ -1,7 +1,11 @@
 /target
 /lib
 /charts
+/bin
+
 timings.csv
+timings_python.csv
+
 y_pred.csv
 y_test.csv
 ylr_pred.csv
@@ -12,4 +16,5 @@ matrix_logistic_regression_iris.csv
 matrix_logistic_regression.csv
 matrix.csv
 matrix_iris.csv
+
 .DS_Store
