@@ -6,6 +6,8 @@
 timings.csv
 timings_python.csv
 
+accuracies.csv
+
 y_pred.csv
 y_test.csv
 ylr_pred.csv
