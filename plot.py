@@ -12,7 +12,7 @@ if not os.path.exists('charts'):
 for file in os.listdir('charts'):
     os.remove(f'charts/{file}')
 
-SETS = [("Gradient Descent Classifier", "y_test.csv", "y_pred.csv"), ("Linear Regression Classifier", "ylr_test.csv", "ylr_pred.csv")]
+SETS = [("Gradient Descent Regression", "y_test.csv", "y_pred.csv"), ("Linear Regression", "ylr_test.csv", "ylr_pred.csv")]
 
 for SET in SETS:
     y_test = pd.read_csv(SET[1])

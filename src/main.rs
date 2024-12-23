@@ -7,6 +7,7 @@ use deep_learning::gaussian_naive_bayes::GaussianNBClassifier;
 use deep_learning::linear_regression::LinearRegression;
 use deep_learning::logistic_regression::LogisticRegression;
 use deep_learning::stochastic_gradient_descent::StochasticGradientDescent;
+use deep_learning::support_vector_machine::{Kernel, SupportVectorMachine};
 
 fn main() {
     let mut timings = Vec::new();
@@ -63,6 +64,12 @@ fn main() {
         "Decision Tree Iris",
         (now.elapsed().as_nanos() as f64) / 1_000_000.0,
     ));
+    println!("Time taken: {:?}\n", now.elapsed());
+
+    println!("Running SVM (Breast Cancer)...");
+    let now = std::time::Instant::now();
+    run_svm();
+    timings.push(("SVM", (now.elapsed().as_nanos() as f64) / 1_000_000.0));
     println!("Time taken: {:?}\n", now.elapsed());
 
     // write timings to a csv file
@@ -208,4 +215,24 @@ fn run_decision_tree_iris() {
     matrix
         .write_to_csv("matrix_decision_tree_iris.csv")
         .unwrap();
+}
+
+fn run_svm() {
+    let (x, y) = load_breast_cancer_dataset();
+    let (x_train, x_test, y_train, y_test) = train_test_split(&x, &y, 0.2, true);
+    // convert y from 0.0, 1.0 to -1.0, 1.0
+    let y_train = y_train
+        .iter()
+        .map(|&yi| if yi == 0.0 { -1.0 } else { 1.0 })
+        .collect();
+    let mut model = SupportVectorMachine::new(1.0, 1e-4, 50, Kernel::Linear, 8);
+    model.fit(x_train, y_train);
+    let y_pred = model.predict(&x_test);
+    let y_pred = y_pred
+        .iter()
+        .map(|&yi| if yi == -1.0 { 0.0 } else { 1.0 })
+        .collect();
+    let matrix = ConfusionMatrix::new(&y_test, &y_pred, &vec![0.0, 1.0]);
+    matrix.print_matrix();
+    matrix.write_to_csv("matrix_svm.csv").unwrap();
 }
