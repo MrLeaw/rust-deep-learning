@@ -2,7 +2,7 @@ use deep_learning::confusion_matrix::ConfusionMatrix;
 use deep_learning::datasets::{
     load_breast_cancer_dataset, load_diabetes_dataset, load_iris_dataset, train_test_split,
 };
-use deep_learning::decision_tree::{DecisionTree, DecisionTreeClassificationMethod};
+use deep_learning::decision_tree::{DecisionTree, DecisionTreeSelectionCriteria};
 use deep_learning::gaussian_naive_bayes::GaussianNBClassifier;
 use deep_learning::linear_regression::LinearRegression;
 use deep_learning::logistic_regression::LogisticRegression;
@@ -196,7 +196,7 @@ fn run_logistic_regression_iris() {
 fn run_decision_tree() {
     let (x, y) = load_breast_cancer_dataset();
     let (x_train, x_test, y_train, y_test) = train_test_split(&x, &y, 0.2, true);
-    let mut decision_tree = DecisionTree::new(DecisionTreeClassificationMethod::InformationGain);
+    let mut decision_tree = DecisionTree::new(DecisionTreeSelectionCriteria::InformationGain);
     decision_tree.fit(&x_train, &y_train);
     let y_pred = decision_tree.predict(&x_test);
     let matrix = ConfusionMatrix::new(&y_test, &y_pred, &vec![0.0, 1.0]);
@@ -207,7 +207,7 @@ fn run_decision_tree() {
 fn run_decision_tree_iris() {
     let (x, y) = load_iris_dataset();
     let (x_train, x_test, y_train, y_test) = train_test_split(&x, &y, 0.2, true);
-    let mut decision_tree = DecisionTree::new(DecisionTreeClassificationMethod::InformationGain);
+    let mut decision_tree = DecisionTree::new(DecisionTreeSelectionCriteria::InformationGain);
     decision_tree.fit(&x_train, &y_train);
     let y_pred = decision_tree.predict(&x_test);
     let matrix = ConfusionMatrix::new(&y_test, &y_pred, &vec![0.0, 1.0, 2.0]);
@@ -225,7 +225,7 @@ fn run_svm() {
         .iter()
         .map(|&yi| if yi == 0.0 { -1.0 } else { 1.0 })
         .collect();
-    let mut model = SupportVectorMachine::new(1.0, 1e-4, 50, Kernel::Linear, 8);
+    let mut model = SupportVectorMachine::new(1.0, 1e-4, 50, Kernel::Linear);
     model.fit(x_train, y_train);
     let y_pred = model.predict(&x_test);
     let y_pred = y_pred

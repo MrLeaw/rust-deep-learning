@@ -6,15 +6,17 @@ use std::{
 use crate::utils::unique;
 
 // enum for selecting method: information gain, gini impurity, etc.
-#[derive(Clone)]
-pub enum DecisionTreeClassificationMethod {
-    InformationGain,
-    GiniImpurity,
+#[derive(Clone, PartialEq)]
+pub enum DecisionTreeSelectionCriteria {
+    InformationGain,   // For classification
+    GiniImpurity,      // For classification
+    VarianceReduction, // For regression
 }
 
+#[derive(Clone)]
 pub struct DecisionTree {
     root: DecisionTreeNode,
-    selected_method: DecisionTreeClassificationMethod,
+    selected_method: DecisionTreeSelectionCriteria,
 }
 
 #[derive(Clone)]
@@ -39,7 +41,7 @@ impl Default for DecisionTreeNode {
 }
 
 impl DecisionTree {
-    pub fn new(selected_method: DecisionTreeClassificationMethod) -> Self {
+    pub fn new(selected_method: DecisionTreeSelectionCriteria) -> Self {
         Self {
             root: DecisionTreeNode {
                 ..Default::default()
@@ -49,10 +51,12 @@ impl DecisionTree {
     }
 
     pub fn predict(&self, x: &[Vec<f64>]) -> Vec<f64> {
-        x.iter().map(|x_i| self.predict_one(x_i)).collect()
+        let res = x.iter().map(|x_i| self.predict_one(x_i)).collect();
+        println!("Predictions: {:?}", res);
+        res
     }
 
-    fn predict_one(&self, x: &[f64]) -> f64 {
+    pub fn predict_one(&self, x: &[f64]) -> f64 {
         let mut current_node = &self.root;
         while current_node.prediction.is_none() {
             let feature_value = x[current_node.best_feature];
@@ -87,16 +91,27 @@ impl DecisionTree {
                 ..Default::default()
             };
         }
+
         // If X is empty, return the most common label in y as a leaf prediction
         if x.is_empty() {
-            let most_common_label = *y
-                .iter()
-                .max_by_key(|&&label| y.iter().filter(|&&val| val == label).count())
-                .unwrap();
-            return DecisionTreeNode {
-                prediction: Some(most_common_label),
-                ..Default::default()
-            };
+            if self.selected_method == DecisionTreeSelectionCriteria::VarianceReduction {
+                // Regression, return the mean of y
+                let mean: f64 = y.iter().sum::<f64>() / y.len() as f64;
+                return DecisionTreeNode {
+                    prediction: Some(mean),
+                    ..Default::default()
+                };
+            } else {
+                // Classification, return the most common label
+                let most_common_label = *y
+                    .iter()
+                    .max_by_key(|&&label| y.iter().filter(|&&val| val == label).count())
+                    .unwrap();
+                return DecisionTreeNode {
+                    prediction: Some(most_common_label),
+                    ..Default::default()
+                };
+            }
         }
 
         // Find the best feature and threshold to split on
@@ -125,6 +140,32 @@ impl DecisionTree {
         let right_x: Vec<Vec<f64>> = right_indices.iter().map(|&i| x[i].clone()).collect();
         let right_y: Vec<f64> = right_indices.iter().map(|&i| y[i]).collect();
 
+        // check split is valid (at least one sample in each branch)
+        if left_x.is_empty() || right_x.is_empty() {
+            // classification
+            if self.selected_method == DecisionTreeSelectionCriteria::InformationGain
+                || self.selected_method == DecisionTreeSelectionCriteria::GiniImpurity
+            {
+                let most_common_label = *y
+                    .iter()
+                    .max_by_key(|&&label| y.iter().filter(|&&val| val == label).count())
+                    .unwrap();
+                return DecisionTreeNode {
+                    prediction: Some(most_common_label),
+                    ..Default::default()
+                };
+            } else {
+                // regression
+                let mean: f64 = y.iter().sum::<f64>() / y.len() as f64;
+                return DecisionTreeNode {
+                    prediction: Some(mean),
+                    ..Default::default()
+                };
+            }
+        }
+
+        // println!("Left size: {}, Right size: {}", left_x.len(), right_x.len());
+
         let left_node = self.build_tree(&left_x, &left_y, single_threaded);
 
         let right_node = self.build_tree(&right_x, &right_y, single_threaded);
@@ -150,11 +191,14 @@ impl DecisionTree {
 
             for &threshold in &thresholds {
                 let score = match self.selected_method {
-                    DecisionTreeClassificationMethod::InformationGain => {
+                    DecisionTreeSelectionCriteria::InformationGain => {
                         information_gain(&y, &feature_column, threshold)
                     }
-                    DecisionTreeClassificationMethod::GiniImpurity => {
+                    DecisionTreeSelectionCriteria::GiniImpurity => {
                         gini_score(&y, &feature_column, threshold)
+                    }
+                    DecisionTreeSelectionCriteria::VarianceReduction => {
+                        variance_reduction(&y, &feature_column, threshold)
                     }
                 };
                 if score > best_score {
@@ -188,11 +232,14 @@ impl DecisionTree {
 
                 for &threshold in &thresholds {
                     let score = match selected_method {
-                        DecisionTreeClassificationMethod::InformationGain => {
+                        DecisionTreeSelectionCriteria::InformationGain => {
                             information_gain(&y, &feature_column, threshold)
                         }
-                        DecisionTreeClassificationMethod::GiniImpurity => {
+                        DecisionTreeSelectionCriteria::GiniImpurity => {
                             gini_score(&y, &feature_column, threshold)
+                        }
+                        DecisionTreeSelectionCriteria::VarianceReduction => {
+                            variance_reduction(&y, &feature_column, threshold)
                         }
                     };
                     let mut best_score_guard = best_score.lock().unwrap();
@@ -301,6 +348,31 @@ fn gini(y: &[f64]) -> f64 {
     gini
 }
 
+fn variance(y: &[f64]) -> f64 {
+    let mean: f64 = y.iter().sum::<f64>() / y.len() as f64;
+    y.iter().map(|&val| (val - mean).powi(2)).sum::<f64>() / y.len() as f64
+}
+
+fn variance_reduction(y: &[f64], x_column: &[f64], threshold: f64) -> f64 {
+    let parent_variance = variance(y);
+    let (left_indices, right_indices) = split_indices(x_column, threshold);
+    if left_indices.is_empty() || right_indices.is_empty() {
+        return 0.0;
+    }
+
+    let left_y: Vec<f64> = left_indices.iter().map(|&i| y[i]).collect();
+    let right_y: Vec<f64> = right_indices.iter().map(|&i| y[i]).collect();
+
+    let left_variance = variance(&left_y);
+    let right_variance = variance(&right_y);
+
+    let n = y.len() as f64;
+    let left_weight = left_y.len() as f64 / n;
+    let right_weight = right_y.len() as f64 / n;
+
+    parent_variance - (left_weight * left_variance + right_weight * right_variance)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -342,9 +414,10 @@ mod tests {
     #[test]
     fn test_decision_tree() {
         let (x, y) = load_breast_cancer_dataset();
+        println!("X: {:?}", x);
+        println!("Y: {:?}", y);
         let (x_train, x_test, y_train, y_test) = train_test_split(&x, &y, 0.2, true);
-        let mut decision_tree =
-            DecisionTree::new(DecisionTreeClassificationMethod::InformationGain);
+        let mut decision_tree = DecisionTree::new(DecisionTreeSelectionCriteria::InformationGain);
         decision_tree.fit(&x_train, &y_train);
 
         let y_pred = decision_tree.predict(&x_test);
@@ -356,7 +429,7 @@ mod tests {
     #[test]
     fn test_best_criteria_real_data() {
         let (x, y) = load_breast_cancer_dataset();
-        let tree = DecisionTree::new(DecisionTreeClassificationMethod::InformationGain);
+        let tree = DecisionTree::new(DecisionTreeSelectionCriteria::InformationGain);
         let (best_feature, best_threshold) = tree.best_criteria(&x, &y);
         assert_eq!(best_feature, 22);
         assert_eq!(best_threshold, 106.0);
