@@ -14,3 +14,5 @@ pub mod k_nearest_neighbors;
 pub mod logistic_regression;
 pub mod random_forest;
 pub mod support_vector_machine;
+
+pub mod fully_connected_neural_network;

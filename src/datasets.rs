@@ -31,6 +31,25 @@ pub fn load_breast_cancer_dataset() -> (Vec<Vec<f64>>, Vec<f64>) {
     (x, y)
 }
 
+pub fn load_boston_dataset() -> (Vec<Vec<f64>>, Vec<f64>) {
+    let filepath = "data/boston";
+    // skip first line each because it's header
+    let x = std::fs::read_to_string(format!("{}/X.csv", filepath))
+        .unwrap()
+        .lines()
+        .skip(1)
+        .map(|line| line.split(',').map(|x| x.parse::<f64>().unwrap()).collect())
+        .collect();
+    // one inner vec for each row
+    let y = std::fs::read_to_string(format!("{}/y.csv", filepath))
+        .unwrap()
+        .lines()
+        .skip(1)
+        .map(|x| x.parse::<f64>().unwrap())
+        .collect();
+    (x, y)
+}
+
 // for regression
 pub fn load_diabetes_dataset() -> (Vec<Vec<f64>>, Vec<f64>) {
     let filepath = "data/diabetes";
